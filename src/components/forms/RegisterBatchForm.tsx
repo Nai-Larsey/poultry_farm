@@ -71,7 +71,7 @@ export function RegisterBatchForm({ houses }: RegisterBatchFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-1">Batch Name</label>
           <input
             {...register("batchName")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors text-gray-900"
             placeholder="e.g., Spring-Broiler-01"
           />
           {errors.batchName && <p className="text-red-500 text-xs mt-1">{errors.batchName.message}</p>}
@@ -97,7 +97,7 @@ export function RegisterBatchForm({ houses }: RegisterBatchFormProps) {
             <input
               type="number"
               {...register("initialQuantity", { valueAsNumber: true })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors text-gray-900"
               placeholder="1000"
             />
             {errors.initialQuantity && <p className="text-red-500 text-xs mt-1">{errors.initialQuantity.message}</p>}

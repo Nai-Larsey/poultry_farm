@@ -5,6 +5,8 @@ import { onboardFarmer } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Layout, MapPin, BarChart3, ArrowRight, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -58,64 +60,36 @@ export default function OnboardingPage() {
               )}
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <Layout className="w-4 h-4 mr-2 text-green-700" />
-                    Farm Name
-                  </label>
-                  <input
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="e.g. Green Valley Farm"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-gray-50/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <MapPin className="w-4 h-4 mr-2 text-green-700" />
-                    Location
-                  </label>
-                  <input
-                    name="location"
-                    type="text"
-                    required
-                    placeholder="e.g. Kumasi, Ghana"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-gray-50/50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                    <BarChart3 className="w-4 h-4 mr-2 text-green-700" />
-                    Total Capacity (Birds)
-                  </label>
-                  <input
-                    name="capacity"
-                    type="number"
-                    required
-                    min="1"
-                    placeholder="e.g. 5000"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-gray-50/50"
-                  />
-                </div>
+                <Input 
+                  label="Farm Name"
+                  name="name"
+                  required
+                  placeholder="e.g. Green Valley Farm"
+                />
+                <Input 
+                  label="Location"
+                  name="location"
+                  required
+                  placeholder="e.g. Kumasi, Ghana"
+                />
+                <Input 
+                  label="Total Capacity (Birds)"
+                  name="capacity"
+                  type="number"
+                  required
+                  min="1"
+                  placeholder="e.g. 5000"
+                />
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={isLoading}
-                className="w-full py-4 bg-green-800 hover:bg-green-700 text-white rounded-2xl font-bold transition-all shadow-lg flex items-center justify-center space-x-2 disabled:opacity-50"
+                isLoading={isLoading}
+                className="w-full py-6 rounded-2xl text-lg flex items-center justify-center gap-2"
               >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <>
-                    <span>Start Managing Farm</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </button>
+                <span>Start Managing Farm</span>
+                <ArrowRight className="w-5 h-5" />
+              </Button>
             </form>
           </CardContent>
         </Card>

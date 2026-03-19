@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2 } from 'lucide-react';
 import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 interface SettingsContentProps {
   farm: any;
@@ -107,46 +109,33 @@ export function SettingsContent({ farm }: SettingsContentProps) {
               <CardContent>
                 <form onSubmit={handleUpdateFarm} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Farm Name</label>
-                      <input 
-                        name="name"
-                        type="text" 
-                        defaultValue={farm?.name}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                      <input 
-                        name="location"
-                        type="text" 
-                        defaultValue={farm?.location || ''}
-                        required
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500" 
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Total Capacity</label>
-                    <input 
-                      name="capacity"
-                      type="number" 
-                      defaultValue={farm?.capacity}
+                    <Input 
+                      label="Farm Name"
+                      name="name"
+                      defaultValue={farm?.name}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500" 
+                    />
+                    <Input 
+                      label="Location"
+                      name="location"
+                      defaultValue={farm?.location || ''}
+                      required
                     />
                   </div>
+                  <Input 
+                    label="Total Capacity"
+                    name="capacity"
+                    type="number" 
+                    defaultValue={farm?.capacity}
+                    required
+                  />
                   <div className="pt-4">
-                    <button 
+                    <Button 
                       type="submit" 
-                      disabled={isUpdatingFarm}
-                      className="bg-green-800 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center"
+                      isLoading={isUpdatingFarm}
                     >
-                      {isUpdatingFarm && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                       Save Changes
-                    </button>
+                    </Button>
                   </div>
                 </form>
               </CardContent>
@@ -187,26 +176,19 @@ export function SettingsContent({ farm }: SettingsContentProps) {
             <div className="p-6">
               <h3 className="text-xl font-bold text-gray-900 mb-4">Add New Poultry House</h3>
               <form onSubmit={handleAddHouse} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">House Number / Name</label>
-                  <input 
-                    name="houseNumber"
-                    type="text" 
-                    placeholder="e.g. House 01"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Capacity (Birds)</label>
-                  <input 
-                    name="capacity"
-                    type="number" 
-                    placeholder="e.g. 1000"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500" 
-                  />
-                </div>
+                <Input 
+                  label="House Number / Name"
+                  name="houseNumber"
+                  placeholder="e.g. House 01"
+                  required
+                />
+                <Input 
+                  label="Capacity (Birds)"
+                  name="capacity"
+                  type="number" 
+                  placeholder="e.g. 1000"
+                  required
+                />
                 <div className="flex justify-end space-x-3 pt-4">
                   <button 
                     type="button" 

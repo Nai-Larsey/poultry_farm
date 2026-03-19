@@ -151,3 +151,41 @@ export async function getFarmMembers() {
     return { members, invitations }
   })
 }
+export async function deleteMember(memberId: number) {
+  const userId = await getUserId()
+  return await (prisma as any).$withUser(userId, async (tx: any) => {
+    // Only Owners or Managers can delete members
+    const currentUser = await tx.user.findUnique({
+      where: { id: userId }
+    })
+    if (currentUser.role === 'WORKER') throw new Error('Unauthorized')
+
+    await tx.farmMember.delete({
+      where: { id: memberId }
+    })
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error deleting member:', error)
+    return { success: false, error: error.message }
+  })
+}
+
+export async function deleteInvitation(invitationId: number) {
+  const userId = await getUserId()
+  return await (prisma as any).$withUser(userId, async (tx: any) => {
+    const currentUser = await tx.user.findUnique({
+      where: { id: userId }
+    })
+    if (currentUser.role === 'WORKER') throw new Error('Unauthorized')
+
+    await tx.invitation.delete({
+      where: { id: invitationId }
+    })
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error deleting invitation:', error)
+    return { success: false, error: error.message }
+  })
+}

@@ -313,3 +313,89 @@ export async function checkOnboardingStatus() {
 }
 
 
+export async function getAllEggProduction() {
+  const userId = await getUserId()
+  return await (prisma as any).$withUser(userId, async (tx: any) => {
+    return await tx.eggProduction.findMany({
+      include: {
+        batch: true,
+      },
+      orderBy: {
+        logDate: 'desc',
+      },
+      take: 50,
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching egg production:', error)
+    return []
+  })
+}
+
+export async function getAllFeedingLogs() {
+  const userId = await getUserId()
+  return await (prisma as any).$withUser(userId, async (tx: any) => {
+    return await tx.feedingLog.findMany({
+      include: {
+        batch: true,
+        inventory: true,
+      },
+      orderBy: {
+        logDate: 'desc',
+      },
+      take: 50,
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching feeding logs:', error)
+    return []
+  })
+}
+
+export async function getAllInventory() {
+  const userId = await getUserId()
+  return await (prisma as any).$withUser(userId, async (tx: any) => {
+    return await tx.inventory.findMany({
+      orderBy: {
+        itemName: 'asc',
+      },
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching inventory:', error)
+    return []
+  })
+}
+
+export async function getAllSales() {
+  const userId = await getUserId()
+  return await (prisma as any).$withUser(userId, async (tx: any) => {
+    return await tx.sale.findMany({
+      include: {
+        items: true,
+      },
+      orderBy: {
+        saleDate: 'desc',
+      },
+      take: 50,
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching sales:', error)
+    return []
+  })
+}
+
+export async function getAllMortalityLogs() {
+  const userId = await getUserId()
+  return await (prisma as any).$withUser(userId, async (tx: any) => {
+    return await tx.mortality.findMany({
+      include: {
+        batch: true,
+      },
+      orderBy: {
+        logDate: 'desc',
+      },
+      take: 50,
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching mortality logs:', error)
+    return []
+  })
+}
