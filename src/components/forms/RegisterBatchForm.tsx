@@ -6,6 +6,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createBatch } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Button } from '@/components/ui/Button';
 
 const formSchema = z.object({
   batchName: z.string().min(2, "Batch name is required"),
@@ -38,6 +41,12 @@ export function RegisterBatchForm({ houses }: RegisterBatchFormProps) {
     },
   });
 
+  const houseOptions = houses.map(h => ({ label: h.name, value: h.id.toString() }));
+  const breedOptions = [
+    { label: "Broiler (Meat)", value: "Broiler" },
+    { label: "Layer (Eggs)", value: "Layer" }
+  ];
+
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
     try {
@@ -49,7 +58,6 @@ export function RegisterBatchForm({ houses }: RegisterBatchFormProps) {
       });
 
       if (result.success) {
-        alert("Batch registered successfully!");
         router.refresh();
       } else {
         alert("Error: " + result.error);
@@ -62,84 +70,54 @@ export function RegisterBatchForm({ houses }: RegisterBatchFormProps) {
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm max-w-lg w-full">
-      <h2 className="text-xl font-bold text-gray-900 mb-6">Register New Batch</h2>
-      
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Batch Name */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Batch Name</label>
-          <input
-            {...register("batchName")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors text-gray-900"
-            placeholder="e.g., Spring-Broiler-01"
-          />
-          {errors.batchName && <p className="text-red-500 text-xs mt-1">{errors.batchName.message}</p>}
-        </div>
+    <div className="w-full max-w-lg">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <Input
+          label="Batch Name"
+          placeholder="e.g., Spring-Broiler-01"
+          {...register("batchName")}
+          error={errors.batchName?.message}
+        />
 
-        {/* Breed */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Breed</label>
-          <select
-            {...register("breed")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors bg-white text-gray-900"
-          >
-            <option value="Broiler">Broiler (Meat)</option>
-            <option value="Layer">Layer (Eggs)</option>
-          </select>
-          {errors.breed && <p className="text-red-500 text-xs mt-1">{errors.breed.message}</p>}
-        </div>
+        <Select
+          label="Breed"
+          options={breedOptions}
+          {...register("breed")}
+          error={errors.breed?.message}
+        />
 
-        {/* Initial Quantity & House Number */}
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Initial Quantity</label>
-            <input
-              type="number"
-              {...register("initialQuantity", { valueAsNumber: true })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors text-gray-900"
-              placeholder="1000"
-            />
-            {errors.initialQuantity && <p className="text-red-500 text-xs mt-1">{errors.initialQuantity.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">House</label>
-            <select
-              {...register("houseId")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors bg-white text-gray-900"
-            >
-              <option value="">Select House</option>
-              {houses.map((house) => (
-                <option key={house.id} value={house.id.toString()}>
-                  {house.name}
-                </option>
-              ))}
-            </select>
-            {errors.houseId && <p className="text-red-500 text-xs mt-1">{errors.houseId.message}</p>}
-          </div>
-        </div>
-
-        {/* Hatch Date */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Hatch Date</label>
-          <input
-            type="date"
-            {...register("hatchDate")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-colors bg-white text-gray-900"
+          <Input
+            label="Initial Quantity"
+            type="number"
+            placeholder="1000"
+            {...register("initialQuantity", { valueAsNumber: true })}
+            error={errors.initialQuantity?.message}
           />
-          {errors.hatchDate && <p className="text-red-500 text-xs mt-1">{errors.hatchDate.message}</p>}
+
+          <Select
+            label="House"
+            options={[{ label: "Select House", value: "" }, ...houseOptions]}
+            {...register("houseId")}
+            error={errors.houseId?.message}
+          />
         </div>
 
-        {/* Submit */}
-        <div className="pt-4 border-t border-gray-100 mt-6">
-          <button
+        <Input
+          label="Hatch Date"
+          type="date"
+          {...register("hatchDate")}
+          error={errors.hatchDate?.message}
+        />
+
+        <div className="pt-4">
+          <Button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-green-800 hover:bg-green-700 text-white font-semibold py-2.5 px-4 rounded-md shadow-sm transition-colors focus:outline-none z-10 disabled:opacity-50"
+            isLoading={isSubmitting}
+            className="w-full"
           >
-            {isSubmitting ? "Registering..." : "Register Batch"}
-          </button>
+            Register Batch
+          </Button>
         </div>
       </form>
     </div>

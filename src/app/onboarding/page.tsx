@@ -38,28 +38,28 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-extrabold text-green-900">Welcome to Poultry PMS</h1>
-          <p className="mt-2 text-sm text-gray-600">
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="max-w-md w-full space-y-12 relative z-10">
+        <div className="text-center space-y-4">
+          <h1 className="text-5xl font-black text-white tracking-tighter italic">Welcome to <span className="text-emerald-400">Poultry PMS</span></h1>
+          <p className="text-sm text-white/70 font-bold uppercase tracking-widest italic">
             Let's get your farm set up to start tracking your operations.
           </p>
         </div>
 
-        <Card className="border-none shadow-xl">
+        <Card className="glass-morphism border-none shadow-2xl rounded-[2.5rem] p-4">
           <CardHeader>
-            <CardTitle className="text-xl">Farm Profile</CardTitle>
+            <CardTitle className="text-2xl italic tracking-tighter">Farm Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
               {error && (
-                <div className="p-3 bg-red-100 border border-red-200 text-red-700 text-sm rounded-md">
+                <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-2xl font-bold backdrop-blur-md">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <Input 
                   label="Farm Name"
                   name="name"
@@ -82,18 +82,25 @@ export default function OnboardingPage() {
                 />
               </div>
 
-              <Button
-                type="submit"
-                isLoading={isLoading}
-                className="w-full py-6 rounded-2xl text-lg flex items-center justify-center gap-2"
-              >
-                <span>Start Managing Farm</span>
-                <ArrowRight className="w-5 h-5" />
-              </Button>
+              <div className="pt-4">
+                <Button
+                  type="submit"
+                  isLoading={isLoading}
+                  size="lg"
+                  className="w-full"
+                >
+                  Start Managing Farm
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
       </div>
+
+      {/* Decorative background effects for onboarding */}
+      <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px] -z-10 animate-pulse" />
+      <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[120px] -z-10 animate-pulse delay-700" />
     </div>
   );
 }

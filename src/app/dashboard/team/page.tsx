@@ -6,6 +6,8 @@ import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, 
 import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation } from '@/lib/actions/staff-actions';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 
 export default function TeamPage() {
   const [members, setMembers] = useState<any[]>([]);
@@ -94,44 +96,49 @@ export default function TeamPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-4 py-8">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Team Management</h2>
-          <p className="text-gray-500 mt-1">Manage your farm staff and permissions.</p>
+    <div className="max-w-7xl mx-auto space-y-8 px-4 py-8 relative">
+      <div className="flex justify-between items-center bg-white/5 backdrop-blur-md p-8 rounded-[2.5rem] border border-white/10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-5">
+           <Users className="w-32 h-32 text-emerald-400" />
+        </div>
+        <div className="relative z-10">
+          <h2 className="text-4xl font-black text-white tracking-tighter">Team <span className="text-emerald-400 italic">Management</span></h2>
+          <p className="text-white/60 font-bold uppercase tracking-widest text-[10px] mt-2 flex items-center gap-2 italic">
+             <Shield className="w-3 h-3" /> Access Control & Operations
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50">
-            <CardHeader className="bg-gray-50/50 rounded-t-2xl border-b border-gray-100">
-              <CardTitle className="flex items-center text-gray-800">
-                <Users className="w-5 h-5 mr-3 text-green-700" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <Card className="rounded-[2.5rem] border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl">
+            <CardHeader className="bg-white/5 rounded-t-[2.5rem] border-b border-white/10 px-8 py-6">
+              <CardTitle className="flex items-center text-white font-black italic">
+                <Users className="w-5 h-5 mr-3 text-emerald-400" />
                 Active Members
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-8">
               {isLoading && members.length === 0 ? (
-                <div className="flex justify-center p-20"><Loader2 className="animate-spin h-10 w-10 text-green-800" /></div>
+                <div className="flex justify-center p-20 text-emerald-500"><Loader2 className="animate-spin h-10 w-10" /></div>
               ) : members.length === 0 ? (
-                <div className="text-center py-20 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200">
-                  <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-400 font-medium italic">No staff members found.</p>
+                <div className="text-center py-20 bg-white/5 rounded-3xl border-2 border-dashed border-white/10">
+                  <Users className="w-12 h-12 text-white/10 mx-auto mb-4" />
+                  <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] italic">No staff members found.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {members.map((member) => (
-                    <div key={member.id} className="p-4 rounded-2xl border border-gray-100 bg-white hover:border-green-100 hover:shadow-lg transition-all flex items-center justify-between group">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 rounded-xl bg-green-950 flex items-center justify-center text-white font-black text-lg shadow-lg shadow-green-900/10">
+                    <div key={member.id} className="p-5 rounded-3xl border border-white/5 bg-white/5 hover:border-emerald-500/30 hover:bg-white/[0.08] transition-all flex items-center justify-between group relative overflow-hidden">
+                      <div className="flex items-center space-x-5">
+                        <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-black text-xl shadow-lg border border-emerald-500/20">
                           {(member.user.firstname?.charAt(0) || member.user.surname?.charAt(0) || 'U').toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900">
+                          <p className="font-black text-white text-lg tracking-tight">
                             {member.user.firstname} {member.user.surname}
                           </p>
-                          <p className="text-xs text-gray-400 font-medium">{member.user.email}</p>
+                          <p className="text-xs text-white/50 font-bold tracking-tight">{member.user.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -139,9 +146,9 @@ export default function TeamPage() {
                         {member.role !== 'OWNER' && (
                           <button 
                             onClick={() => setDeleteTarget({ id: member.id, type: 'member' })}
-                            className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            className="p-2.5 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-red-500/20"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-5 h-5" />
                           </button>
                         )}
                       </div>
@@ -152,42 +159,42 @@ export default function TeamPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50">
-            <CardHeader className="bg-gray-50/50 rounded-t-2xl border-b border-gray-100">
-              <CardTitle className="flex items-center text-gray-800">
-                <Mail className="w-5 h-5 mr-3 text-amber-600" />
+          <Card className="rounded-[2.5rem] border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl">
+            <CardHeader className="bg-white/5 rounded-t-[2.5rem] border-b border-white/10 px-8 py-6">
+              <CardTitle className="flex items-center text-white font-black italic">
+                <Mail className="w-5 h-5 mr-3 text-amber-400" />
                 Pending Invitations
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-8">
               {isLoading && invitations.length === 0 ? (
-                <div className="flex justify-center p-12"><Loader2 className="animate-spin text-amber-600" /></div>
+                <div className="flex justify-center p-12 text-amber-400"><Loader2 className="animate-spin" /></div>
               ) : invitations.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200">
-                  <Mail className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                  <p className="text-gray-400 font-medium italic text-sm">No pending invitations.</p>
+                <div className="text-center py-12 bg-white/5 rounded-3xl border-2 border-dashed border-white/10">
+                  <Mail className="w-10 h-10 text-white/10 mx-auto mb-3" />
+                  <p className="text-white/40 font-bold uppercase tracking-widest text-[10px] italic">No pending invitations.</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {invitations.map((invite) => (
-                    <div key={invite.id} className="p-4 rounded-xl border border-gray-100 bg-gray-50/30 flex items-center justify-between group">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
-                          <Mail className="w-5 h-5" />
+                    <div key={invite.id} className="p-5 rounded-2xl border border-white/5 bg-white/5 flex items-center justify-between group hover:bg-white/[0.08] transition-all">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+                          <Mail className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900 text-sm">{invite.email}</p>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Sent {new Date(invite.createdAt).toLocaleDateString()}</p>
+                          <p className="font-black text-white tracking-tight">{invite.email}</p>
+                          <p className="text-[10px] text-white/40 font-black uppercase tracking-widest mt-0.5">Sent {new Date(invite.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-4">
                         {getRoleBadge(invite.role)}
-                        <span className="text-[10px] bg-amber-50 text-amber-600 px-2 py-1 rounded-full font-black uppercase tracking-widest border border-amber-100">Pending</span>
+                        <span className="text-[10px] bg-amber-500/10 text-amber-400 px-3 py-1 rounded-full font-black uppercase tracking-widest border border-amber-500/20">Pending</span>
                         <button 
                           onClick={() => setDeleteTarget({ id: invite.id, type: 'invite' })}
-                          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-all opacity-0 group-hover:opacity-100"
+                          className="p-2 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -198,50 +205,46 @@ export default function TeamPage() {
           </Card>
         </div>
 
-        <div className="space-y-6">
-          <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50 bg-green-950 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
-              <UserPlus className="w-32 h-32" />
+        <div className="space-y-8">
+          <Card className="rounded-[2.5rem] border border-white/10 bg-emerald-500/5 backdrop-blur-xl text-white overflow-hidden relative shadow-2xl border-dashed">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <UserPlus className="w-48 h-48 text-emerald-400" />
             </div>
-            <CardHeader className="relative z-10">
+            <CardHeader className="relative z-10 p-8">
               <CardTitle className="flex items-center">
                 Invite Staff
               </CardTitle>
             </CardHeader>
-            <CardContent className="relative z-10">
-              <form onSubmit={handleInvite} className="space-y-4">
+            <CardContent className="relative z-10 px-8 pb-8">
+              <form onSubmit={handleInvite} className="space-y-6">
                 {message && (
-                  <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-3 animate-in fade-in slide-in-from-top-2 ${
-                    message.type === 'success' ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                  <div className={`p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 animate-in fade-in slide-in-from-top-2 backdrop-blur-md ${
+                    message.type === 'success' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
                     {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                     {message.text}
                   </div>
                 )}
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-green-300 mb-2">Email Address</label>
-                  <input 
-                    name="email"
-                    type="email" 
-                    required
-                    placeholder="staff@example.com"
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all outline-none placeholder:text-white/30 text-white font-medium" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-widest text-green-300 mb-2">Assign Role</label>
-                  <select 
-                    name="role"
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none text-white font-medium cursor-pointer"
-                  >
-                    <option value="WORKER" className="text-gray-900">Worker</option>
-                    <option value="MANAGER" className="text-gray-900">Manager</option>
-                  </select>
-                </div>
+                <Input 
+                  label="Email Address"
+                  name="email"
+                  type="email" 
+                  required
+                  placeholder="staff@example.com"
+                />
+                <Select 
+                  label="Assign Role"
+                  name="role"
+                  options={[
+                    { label: 'Worker', value: 'WORKER' },
+                    { label: 'Manager', value: 'MANAGER' }
+                  ]}
+                  defaultValue="WORKER"
+                />
                 <Button 
                   type="submit" 
                   disabled={isInviting}
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-green-950 font-black py-4 rounded-xl shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98]"
+                  className="w-full py-6 mt-4"
                 >
                   {isInviting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}
                 </Button>
@@ -249,21 +252,21 @@ export default function TeamPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50 bg-white p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-blue-50 rounded-lg">
-                <Shield className="w-5 h-5 text-blue-600" />
+          <Card className="rounded-[2.5rem] border border-white/10 bg-white/5 backdrop-blur-xl p-8 shadow-2xl">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="p-3 bg-blue-500/10 rounded-2xl border border-blue-500/20">
+                <Shield className="w-6 h-6 text-blue-400" />
               </div>
-              <h4 className="font-black text-gray-900 italic tracking-tight">Role Permissions</h4>
+              <h4 className="font-black text-white italic tracking-tight text-xl">Permissions</h4>
             </div>
-            <div className="space-y-4">
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <p className="font-black text-[10px] uppercase tracking-widest text-blue-600 mb-1">Manager</p>
-                <p className="text-xs text-gray-500 leading-relaxed font-medium">Full visibility of all farm operations and logs. Can manage staff, inventory, and sales.</p>
+            <div className="space-y-5">
+              <div className="p-5 bg-white/5 rounded-3xl border border-white/5 group hover:bg-white/[0.08] transition-all">
+                <p className="font-black text-[10px] uppercase tracking-widest text-blue-400 mb-2 italic">Manager</p>
+                <p className="text-xs text-white/50 leading-relaxed font-bold tracking-tight">Full visibility of all farm operations and logs. Can manage staff, inventory, and sales.</p>
               </div>
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <p className="font-black text-[10px] uppercase tracking-widest text-green-600 mb-1">Worker</p>
-                <p className="text-xs text-gray-500 leading-relaxed font-medium">Limited to data entry (feeding, mortality logs). Can only view their own activity records.</p>
+              <div className="p-5 bg-white/5 rounded-3xl border border-white/5 group hover:bg-white/[0.08] transition-all">
+                <p className="font-black text-[10px] uppercase tracking-widest text-emerald-400 mb-2 italic">Worker</p>
+                <p className="text-xs text-white/50 leading-relaxed font-bold tracking-tight">Limited to data entry (feeding, mortality logs). Can only view their own activity records.</p>
               </div>
             </div>
           </Card>
@@ -275,13 +278,13 @@ export default function TeamPage() {
         onOpenChange={(open) => !open && setDeleteTarget(null)} 
         title={`Revoke ${deleteTarget?.type === 'member' ? 'Access' : 'Invitation'}`}
       >
-        <div className="space-y-4">
-          <p className="text-gray-600">
+        <div className="space-y-6">
+          <p className="text-white/70 font-medium">
             Are you sure you want to {deleteTarget?.type === 'member' ? 'remove this member from the farm' : 'cancel this invitation'}? 
             This action cannot be undone.
           </p>
-          <div className="flex justify-end gap-3 pt-4">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Keep</Button>
+          <div className="flex justify-end gap-3 pt-6 border-t border-white/10">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
             <Button variant="danger" onClick={handleDelete} isLoading={isLoading}>
               Confirm Revoke
             </Button>

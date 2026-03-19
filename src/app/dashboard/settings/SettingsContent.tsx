@@ -80,10 +80,10 @@ export function SettingsContent({ farm }: SettingsContentProps) {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`w-full text-left px-4 py-2 rounded-md flex items-center transition-colors ${
+            className={`w-full text-left px-4 py-3 rounded-2xl flex items-center transition-all duration-300 ${
               activeTab === tab.id
-                ? 'bg-green-50 text-green-900 font-medium'
-                : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/30'
+                : 'text-white/60 hover:bg-white/5 hover:text-white'
             }`}
           >
             <tab.icon className="w-4 h-4 mr-2" /> {tab.label}
@@ -93,8 +93,8 @@ export function SettingsContent({ farm }: SettingsContentProps) {
 
       <div className="md:col-span-3 space-y-6">
         {message && (
-          <div className={`p-4 rounded-md text-sm ${
-            message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          <div className={`p-4 rounded-2xl text-sm font-bold backdrop-blur-md border ${
+            message.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' : 'bg-red-500/10 border-red-500/30 text-red-400'
           }`}>
             {message.text}
           </div>
@@ -146,13 +146,13 @@ export function SettingsContent({ farm }: SettingsContentProps) {
                 <CardTitle>House Configuration</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-gray-500 mb-4">Manage your poultry houses and their sensor configurations.</p>
-                <button 
+                <p className="text-sm text-white/60 mb-6 font-medium">Manage your poultry houses and their sensor configurations.</p>
+                <Button 
                   onClick={() => setShowHouseModal(true)}
-                  className="text-amber-600 border border-amber-600 px-4 py-2 rounded-md text-sm hover:bg-amber-50 transition-colors flex items-center"
+                  variant="outline"
                 >
-                  <Plus className="w-4 h-4 mr-1" /> Add New House
-                </button>
+                  <Plus className="w-4 h-4 mr-2" /> Add New House
+                </Button>
               </CardContent>
             </Card>
           </>
@@ -171,10 +171,10 @@ export function SettingsContent({ farm }: SettingsContentProps) {
       </div>
 
       {showHouseModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Add New Poultry House</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center z-50 p-4">
+          <div className="glass-pill rounded-[2.5rem] max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="p-10">
+              <h3 className="text-2xl font-black text-white mb-8 tracking-tighter italic">Add New <span className="text-emerald-400">House</span></h3>
               <form onSubmit={handleAddHouse} className="space-y-4">
                 <Input 
                   label="House Number / Name"
@@ -189,22 +189,20 @@ export function SettingsContent({ farm }: SettingsContentProps) {
                   placeholder="e.g. 1000"
                   required
                 />
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button 
+                <div className="flex justify-end space-x-4 pt-8">
+                  <Button 
                     type="button" 
+                    variant="ghost"
                     onClick={() => setShowHouseModal(false)}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
                   >
                     Cancel
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     type="submit" 
-                    disabled={isAddingHouse}
-                    className="bg-green-800 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center"
+                    isLoading={isAddingHouse}
                   >
-                    {isAddingHouse && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Create House
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>

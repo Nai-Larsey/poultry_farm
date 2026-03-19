@@ -52,7 +52,7 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
   if (mode === 'delete') {
     return (
       <div className="space-y-4">
-        <p className="text-gray-600">Are you sure you want to delete this item? This action cannot be undone.</p>
+        <p className="text-white/70 font-medium">Are you sure you want to delete this item? This action cannot be undone.</p>
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Item</Button>
