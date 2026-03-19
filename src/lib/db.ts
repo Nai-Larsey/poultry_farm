@@ -18,6 +18,8 @@ const prismaClientSingleton = () => {
         return await (this as any).$transaction(async (tx: any) => {
           await tx.$executeRawUnsafe(`SET app.current_user_id = '${userId}';`);
           return await callback(tx);
+        }, {
+          timeout: 15000 // Increase timeout to 15s for complex analytics
         });
       }
     }

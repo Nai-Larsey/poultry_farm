@@ -1,16 +1,19 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { getDashboardStats } from '@/lib/actions/dashboard-actions';
 import { DashboardContent } from './DashboardContent';
 import prisma from '@/lib/db';
+import { auth } from '@/auth';
 
-const MOCK_USER_ID = 'user_placeholder';
 export default async function DashboardPage() {
+  const session = await auth();
+  const userId = session?.user?.id || 'placeholder';
+
   try {
     const stats = await getDashboardStats();
     
     // Use $withUser for direct queries to satisfy RLS
-    const housesRaw = await (prisma as any).$withUser(MOCK_USER_ID, async (tx: any) => {
-      return await tx.poultryHouse.findMany();
+    const housesRaw = await (prisma as any).$withUser(userId, async (tx: any) => {
+      return await tx.house.findMany();
     });
     
     // Serialize Decimal objects to numbers for Client Components

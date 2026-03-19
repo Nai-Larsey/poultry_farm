@@ -21,8 +21,12 @@ export async function getDashboardStats() {
       _sum: { currentCount: true }
     })
 
-    const mortalityData = await tx.productionLog.aggregate({
-      _sum: { mortalityCount: true }
+    const eggsData = await tx.eggProduction.aggregate({
+      _sum: { eggsCollected: true }
+    })
+
+    const mortalityData = await tx.mortality.aggregate({
+      _sum: { count: true }
     })
 
     const totalInitialBirds = await tx.batch.aggregate({
@@ -30,12 +34,13 @@ export async function getDashboardStats() {
     })
 
     const mortalityRate = totalInitialBirds._sum.initialCount 
-      ? (Number(mortalityData._sum.mortalityCount || 0) / Number(totalInitialBirds._sum.initialCount)) * 100 
+      ? (Number(mortalityData._sum.count || 0) / Number(totalInitialBirds._sum.initialCount)) * 100 
       : 0
 
     const lowFeedThreshold = 500 // kg
-    const lowFeedAlerts = await tx.feedInventory.findMany({
+    const lowFeedAlerts = await tx.inventory.findMany({
       where: {
+        category: 'feed',
         stockLevel: {
           lt: lowFeedThreshold
         }
@@ -46,7 +51,7 @@ export async function getDashboardStats() {
       where: { status: 'active' },
       include: {
         house: true,
-        productionLogs: {
+        eggProduction: {
           orderBy: { logDate: 'desc' },
           take: 1
         }
@@ -63,7 +68,7 @@ export async function getDashboardStats() {
         quantity: batch.currentCount,
         hatchDate: batch.arrivalDate.toISOString(),
         status: batch.status,
-        houseNumber: batch.house?.houseNumber || 'N/A'
+        houseNumber: batch.house?.name || 'N/A'
       }))
     }
   }).catch((error: any) => {
@@ -116,7 +121,7 @@ export async function logFeeding(data: {
         }
       })
 
-      await tx.feedInventory.update({
+      await tx.inventory.update({
         where: { id: data.feedTypeId },
         data: {
           stockLevel: {
@@ -138,7 +143,7 @@ export async function logFeeding(data: {
 export async function getHouses() {
   const userId = await getUserId()
   return await (prisma as any).$withUser(userId, async (tx: any) => {
-    return await tx.poultryHouse.findMany()
+    return await tx.house.findMany()
   }).catch((error: any) => {
     console.error('Error fetching houses:', error)
     return []
@@ -188,20 +193,31 @@ export async function logProduction(data: {
 }) {
   const userId = await getUserId()
   return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const log = await tx.productionLog.create({
-      data: {
-        batchId: data.batchId,
-        eggsCollected: data.eggsCollected,
-        damagedEggs: data.damagedEggs,
-        birdWeight: data.birdWeight,
-        mortalityCount: data.mortalityCount,
-        logDate: new Date(),
-        userId: userId
-      }
-    })
+    // Log eggs if collected
+    if (data.eggsCollected > 0 || data.damagedEggs > 0) {
+      await tx.eggProduction.create({
+        data: {
+          batchId: data.batchId,
+          eggsCollected: data.eggsCollected,
+          damagedEggs: data.damagedEggs,
+          logDate: new Date(),
+          userId: userId
+        }
+      })
+    }
 
-    // Update current count in batch if mortality is recorded
+    // Log mortality if occurred
     if (data.mortalityCount > 0) {
+      await tx.mortality.create({
+        data: {
+          batchId: data.batchId,
+          count: data.mortalityCount,
+          logDate: new Date(),
+          userId: userId
+        }
+      })
+
+      // Update current count in batch
       await tx.batch.update({
         where: { id: data.batchId },
         data: {
@@ -214,7 +230,7 @@ export async function logProduction(data: {
 
     revalidatePath('/dashboard/eggs')
     revalidatePath('/dashboard')
-    return { success: true, log }
+    return { success: true }
   }).catch((error: any) => {
     console.error('Error logging production:', error)
     return { success: false, error: 'Failed to log production' }
@@ -249,9 +265,9 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
     const farm = await tx.farm.findFirst({ where: { userId } })
     if (!farm) throw new Error('Farm not found')
 
-    const house = await tx.poultryHouse.create({
+    const house = await tx.house.create({
       data: {
-        houseNumber: data.houseNumber,
+        name: data.houseNumber,
         capacity: data.capacity,
         farmId: farm.id,
         userId: userId

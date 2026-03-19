@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   }
 
   // Automatically attempt to accept any pending invitations
-  await acceptInvitation();
+  // await acceptInvitation();
 
   // Fetch full user data to get the role
   const dbUser = await prisma.user.findUnique({
@@ -50,7 +50,7 @@ export default async function DashboardLayout({
     return <div className="p-8 text-center">You are not currently linked to any farm. Please contact your manager.</div>;
   }
 
-  const userName = session.user.name || 'Farmer';
+  const userName = dbUser.firstname || dbUser.surname || session.user.name || 'Farmer';
   const initial = userName.charAt(0).toUpperCase();
 
   return (

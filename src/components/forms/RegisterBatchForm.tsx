@@ -20,7 +20,7 @@ type FormValues = z.infer<typeof formSchema>;
 interface RegisterBatchFormProps {
   houses: Array<{
     id: number;
-    houseNumber: string;
+    name: string;
   }>;
 }
 
@@ -112,7 +112,7 @@ export function RegisterBatchForm({ houses }: RegisterBatchFormProps) {
               <option value="">Select House</option>
               {houses.map((house) => (
                 <option key={house.id} value={house.id.toString()}>
-                  {house.houseNumber}
+                  {house.name}
                 </option>
               ))}
             </select>

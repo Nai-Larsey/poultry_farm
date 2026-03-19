@@ -22,7 +22,7 @@ interface DashboardContentProps {
   };
   houses: Array<{
     id: number;
-    houseNumber: string;
+    name: string;
   }>;
 }
 

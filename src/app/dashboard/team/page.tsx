@@ -94,10 +94,12 @@ export default function TeamPage() {
                     <div key={member.id} className="py-4 flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 rounded-full bg-green-800 flex items-center justify-center text-white font-bold">
-                          {member.user.name?.charAt(0) || 'U'}
+                          {(member.user.firstname?.charAt(0) || member.user.surname?.charAt(0) || 'U').toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-900">{member.user.name}</p>
+                          <p className="font-semibold text-gray-900">
+                            {member.user.firstname} {member.user.surname}
+                          </p>
                           <p className="text-sm text-gray-500">{member.user.email}</p>
                         </div>
                       </div>

@@ -16,6 +16,8 @@ enum Role {
 model User {
   id            String    @id @default(cuid())
   name          String?
+  firstname     String?
+  surname       String?
   email         String?   @unique
   emailVerified DateTime? @map("email_verified")
   image         String?
@@ -80,7 +82,7 @@ model Farm {
   capacity  Int
   userId    String         @default("user_placeholder") // Multi-tenancy
   user      User           @relation(fields: [userId], references: [id])
-  houses    PoultryHouse[]
+  houses    House[]
   members     FarmMember[]
   invitations Invitation[]
   createdAt DateTime       @default(now())
@@ -90,10 +92,10 @@ model Farm {
   @@map("farms")
 }
 
-model PoultryHouse {
+model House {
   id                 Int             @id @default(autoincrement())
   farmId             Int
-  houseNumber        String
+  name               String
   capacity           Int
   currentTemperature Decimal?        @db.Decimal(5, 2)
   currentHumidity    Decimal?        @db.Decimal(5, 2)
@@ -104,7 +106,7 @@ model PoultryHouse {
   updatedAt          DateTime        @updatedAt
 
   @@index([userId])
-  @@map("poultry_houses")
+  @@map("houses")
 }
 
 model Batch {
@@ -117,9 +119,11 @@ model Batch {
   status         String          @default("active")
   userId         String          @default("user_placeholder") // Multi-tenancy
   user           User            @relation(fields: [userId], references: [id])
-  house          PoultryHouse    @relation(fields: [houseId], references: [id])
-  productionLogs ProductionLog[]
+  house          House           @relation(fields: [houseId], references: [id])
+  eggProduction  EggProduction[]
   feedingLogs    FeedingLog[]
+  mortalityRecords Mortality[]
+  weightRecords  WeightRecord[]
   healthRecords  HealthRecord[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -129,18 +133,19 @@ model Batch {
 }
 
 
-model FeedInventory {
+model Inventory {
   id          Int          @id @default(autoincrement())
-  feedType    String
+  itemName    String
   stockLevel  Decimal      @db.Decimal(10, 2)
   unit        String
+  category    String?      // feed, medicine, equipment, etc.
   userId      String       @default("user_placeholder") // Multi-tenancy
   feedingLogs FeedingLog[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   @@index([userId])
-  @@map("feed_inventory")
+  @@map("inventory")
 }
 
 model FeedingLog {
@@ -152,7 +157,7 @@ model FeedingLog {
   userId         String?       @map("user_id") // Supporting RLS
   user           User?         @relation(fields: [userId], references: [id])
   batch          Batch?        @relation(fields: [batchId], references: [id])
-  feedInventory  FeedInventory? @relation(fields: [feedTypeId], references: [id])
+  inventory      Inventory?    @relation(fields: [feedTypeId], references: [id])
 
   @@index([userId])
   @@map("daily_feeding_logs")
@@ -170,20 +175,72 @@ model HealthRecord {
   @@map("health_records")
 }
 
-model ProductionLog {
+model EggProduction {
   id             Int      @id @default(autoincrement())
   batchId        Int
-  eggsCollected  Int?
-  damagedEggs    Int?
-  birdWeight     Decimal? @db.Decimal(5, 2)
-  mortalityCount Int      @default(0)
+  eggsCollected  Int
+  damagedEggs    Int      @default(0)
+  crackedEggs    Int      @default(0)
   logDate        DateTime
   userId         String   @default("user_placeholder") // Multi-tenancy
   batch          Batch    @relation(fields: [batchId], references: [id])
   createdAt      DateTime @default(now())
 
   @@index([userId])
-  @@map("production_logs")
+  @@map("egg_production")
+}
+
+model Mortality {
+  id             Int      @id @default(autoincrement())
+  batchId        Int
+  count          Int
+  reason         String?
+  logDate        DateTime
+  userId         String   @default("user_placeholder") // Multi-tenancy
+  batch          Batch    @relation(fields: [batchId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@map("mortality")
+}
+
+model WeightRecord {
+  id             Int      @id @default(autoincrement())
+  batchId        Int
+  averageWeight  Decimal  @db.Decimal(10, 3) // in kg
+  logDate        DateTime
+  userId         String   @default("user_placeholder")
+  batch          Batch    @relation(fields: [batchId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@map("weight_records")
+}
+
+model Sale {
+  id          Int        @id @default(autoincrement())
+  customerName String?
+  totalAmount Decimal    @db.Decimal(10, 2)
+  saleDate    DateTime   @default(now())
+  status      String     @default("completed") // completed, pending, cancelled
+  userId      String     @default("user_placeholder")
+  items       SaleItem[]
+  createdAt   DateTime   @default(now())
+
+  @@index([userId])
+  @@map("sales")
+}
+
+model SaleItem {
+  id          Int      @id @default(autoincrement())
+  saleId      Int
+  description String
+  quantity    Int
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  sale        Sale     @relation(fields: [saleId], references: [id])
+
+  @@map("sale_items")
 }
 
 model FarmMember {

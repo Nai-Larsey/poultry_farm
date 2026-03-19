@@ -93,6 +93,13 @@ async function applyRLS() {
              SELECT 1 FROM "farms" f WHERE f."userId" = "feed_inventory"."userId"
          )
        )
+     )` ,
+
+    // Weight Records
+    `DROP POLICY IF EXISTS weight_isolation_policy ON "weight_records"`,
+    `CREATE POLICY weight_isolation_policy ON "weight_records" 
+     FOR ALL USING (
+       is_farm_member((SELECT "farmId" FROM "houses" JOIN "batches" ON "houses".id = "batches"."houseId" WHERE "batches".id = "weight_records"."batchId"), current_app_user())
      )`
   ];
 
