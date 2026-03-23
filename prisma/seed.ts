@@ -22,6 +22,7 @@ async function main() {
     where: { id: 1 },
     update: {},
     create: {
+      id: 1,
       name: 'Green Valley Poultry',
       location: '123 Farm Road, Rural County',
       capacity: 50000,
@@ -34,6 +35,7 @@ async function main() {
     where: { id: 1 },
     update: {},
     create: {
+      id: 1,
       farmId: farm.id,
       name: 'H-01',
       capacity: 10000,
@@ -47,6 +49,7 @@ async function main() {
     where: { id: 2 },
     update: {},
     create: {
+      id: 2,
       farmId: farm.id,
       name: 'H-02',
       capacity: 15000,
@@ -61,6 +64,7 @@ async function main() {
     where: { id: 1 },
     update: {},
     create: {
+      id: 1,
       houseId: house1.id,
       breedType: 'Broiler',
       initialCount: 5000,
@@ -76,6 +80,7 @@ async function main() {
     where: { id: 1 },
     update: {},
     create: {
+      id: 1,
       itemName: 'Starter Feed',
       category: 'feed',
       stockLevel: 1200.50,
@@ -88,6 +93,7 @@ async function main() {
     where: { id: 2 },
     update: {},
     create: {
+      id: 2,
       itemName: 'Grower Feed',
       category: 'feed',
       stockLevel: 450.00,
@@ -99,6 +105,7 @@ async function main() {
   // 6. Add some logs
   await prisma.mortality.create({
     data: {
+      id: 1,
       batchId: batch.id,
       count: 10,
       logDate: new Date(),

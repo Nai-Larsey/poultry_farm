@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id            String       @id @default(cuid())
+  id            String       @id
   firstname     String?
   surname       String?
   email         String?      @unique
@@ -18,19 +18,16 @@ model User {
   createdAt     DateTime     @default(now()) @map("created_at")
   updatedAt     DateTime     @updatedAt @map("updated_at")
   name          String?
-  phoneNumber   String?      @unique @map("phone_number")
+  phoneNumber   String?      @map("phone_number")
   accounts      Account[]
-  batches       Batch[]
-  feedingLogs   FeedingLog[]
-  memberships   FarmMember[]
-  farms         Farm[]
   sessions      Session[]
+  memberships   FarmMember[]
 
   @@map("users")
 }
 
 model Account {
-  id                String  @id @default(cuid())
+  id                String  @id
   userId            String  @map("user_id")
   type              String
   provider          String
@@ -44,13 +41,12 @@ model Account {
   session_state     String?
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
   @@map("accounts")
 }
 
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
+  id           String   @id
+  sessionToken String   @map("session_token")
   userId       String   @map("user_id")
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -63,29 +59,26 @@ model VerificationToken {
   token      String   @unique
   expires    DateTime
 
-  @@unique([identifier, token])
   @@map("verification_tokens")
 }
 
 model Farm {
-  id          Int          @id @default(autoincrement())
-  name        String
-  location    String?
-  capacity    Int
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  userId      String       @default("user_placeholder")
-  members     FarmMember[]
-  user        User         @relation(fields: [userId], references: [id])
-  houses      House[]
+  id        Int          @id
+  name      String
+  location  String?
+  capacity  Int
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  userId    String       @default("user_placeholder")
+  members   FarmMember[]
+  houses    House[]
   invitations Invitation[]
 
-  @@index([userId])
   @@map("farms")
 }
 
 model House {
-  id                 Int      @id @default(autoincrement())
+  id                 Int      @id
   farmId             Int
   name               String
   capacity           Int
@@ -97,35 +90,32 @@ model House {
   batches            Batch[]
   farm               Farm     @relation(fields: [farmId], references: [id])
 
-  @@index([userId])
   @@map("houses")
 }
 
 model Batch {
-  id               Int             @id @default(autoincrement())
-  status           String          @default("active")
-  arrivalDate      DateTime
-  breedType        String
-  createdAt        DateTime        @default(now())
-  currentCount     Int
-  houseId          Int
-  initialCount     Int
-  updatedAt        DateTime        @updatedAt
-  userId           String          @default("user_placeholder")
-  house            House           @relation(fields: [houseId], references: [id])
-  user             User            @relation(fields: [userId], references: [id])
-  feedingLogs      FeedingLog[]
-  eggProduction    EggProduction[]
-  healthRecords    HealthRecord[]
-  mortalityRecords Mortality[]
-  weightRecords    WeightRecord[]
+  id            Int             @id
+  status        String          @default("active")
+  arrivalDate   DateTime
+  breedType     String
+  createdAt     DateTime        @default(now())
+  currentCount  Int
+  houseId       Int
+  initialCount  Int
+  updatedAt     DateTime        @updatedAt
+  userId        String          @default("user_placeholder")
+  house         House           @relation(fields: [houseId], references: [id])
+  feedingLogs   FeedingLog[]
+  eggProduction EggProduction[]
+  healthRecords HealthRecord[]
+  mortality     Mortality[]
+  weightRecords WeightRecord[]
 
-  @@index([userId])
   @@map("batches")
 }
 
 model Inventory {
-  id          Int          @id @default(autoincrement())
+  id          Int          @id
   itemName    String
   stockLevel  Decimal      @db.Decimal(10, 2)
   unit        String
@@ -135,12 +125,11 @@ model Inventory {
   updatedAt   DateTime     @updatedAt
   feedingLogs FeedingLog[]
 
-  @@index([userId])
   @@map("inventory")
 }
 
 model FeedingLog {
-  id             Int        @id @default(autoincrement())
+  id             Int        @id
   batchId        Int?       @map("batch_id")
   feedTypeId     Int?       @map("feed_type_id")
   amountConsumed Decimal    @map("amount_consumed") @db.Decimal(10, 2)
@@ -148,14 +137,12 @@ model FeedingLog {
   userId         String?    @map("user_id")
   batch          Batch?     @relation(fields: [batchId], references: [id])
   inventory      Inventory? @relation(fields: [feedTypeId], references: [id])
-  user           User?      @relation(fields: [userId], references: [id])
 
-  @@index([userId])
   @@map("daily_feeding_logs")
 }
 
 model HealthRecord {
-  id          Int      @id @default(autoincrement())
+  id          Int      @id
   batchId     Int?     @map("batch_id")
   recordType  String?  @map("record_type") @db.VarChar(50)
   description String?
@@ -166,7 +153,7 @@ model HealthRecord {
 }
 
 model EggProduction {
-  id            Int      @id @default(autoincrement())
+  id            Int      @id
   batchId       Int
   eggsCollected Int
   damagedEggs   Int      @default(0)
@@ -176,28 +163,26 @@ model EggProduction {
   createdAt     DateTime @default(now())
   batch         Batch    @relation(fields: [batchId], references: [id])
 
-  @@index([userId])
   @@map("egg_production")
 }
 
 model Mortality {
-  id          Int      @id @default(autoincrement())
+  id          Int      @id
   batchId     Int
   count       Int
   reason      String?
-  category    String?
-  subCategory String?  @map("sub_category")
   logDate     DateTime
   userId      String   @default("user_placeholder")
   createdAt   DateTime @default(now())
+  category    String?
+  subCategory String?  @map("sub_category")
   batch       Batch    @relation(fields: [batchId], references: [id])
 
-  @@index([userId])
   @@map("mortality")
 }
 
 model WeightRecord {
-  id            Int      @id @default(autoincrement())
+  id            Int      @id
   batchId       Int
   averageWeight Decimal  @db.Decimal(10, 3)
   logDate       DateTime
@@ -205,26 +190,24 @@ model WeightRecord {
   createdAt     DateTime @default(now())
   batch         Batch    @relation(fields: [batchId], references: [id])
 
-  @@index([userId])
   @@map("weight_records")
 }
 
 model Sale {
-  id           Int        @id @default(autoincrement())
+  id           Int        @id
   customerName String?
   totalAmount  Decimal    @db.Decimal(10, 2)
-  saleDate     DateTime   @default(now())
+  saleDate     DateTime   @default(now()) @map("saleDate")
   status       String     @default("completed")
   userId       String     @default("user_placeholder")
   createdAt    DateTime   @default(now())
   items        SaleItem[]
 
-  @@index([userId])
   @@map("sales")
 }
 
 model SaleItem {
-  id          Int     @id @default(autoincrement())
+  id          Int     @id
   saleId      Int
   description String
   quantity    Int
@@ -236,7 +219,7 @@ model SaleItem {
 }
 
 model FarmMember {
-  id        Int      @id @default(autoincrement())
+  id        Int      @id
   farmId    Int
   userId    String
   role      Role     @default(WORKER)
@@ -245,14 +228,13 @@ model FarmMember {
   farm      Farm     @relation(fields: [farmId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 
-  @@unique([farmId, userId])
   @@map("farm_members")
 }
 
 model Invitation {
-  id          Int      @id @default(autoincrement())
+  id          Int      @id
   email       String?
-  phoneNumber String?  @unique @map("phone_number")
+  phoneNumber String?  @map("phone_number")
   farmId      Int      @map("farm_id")
   role        Role     @default(WORKER)
   status      String   @default("PENDING")
@@ -260,8 +242,6 @@ model Invitation {
   updatedAt   DateTime @updatedAt @map("updated_at")
   farm        Farm     @relation(fields: [farmId], references: [id])
 
-  @@unique([email, farmId])
-  @@index([farmId])
   @@map("invitations")
 }
 
