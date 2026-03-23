@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id            String       @id
+  id            String       @id @default(cuid())
   firstname     String?
   surname       String?
   email         String?      @unique
@@ -27,7 +27,7 @@ model User {
 }
 
 model Account {
-  id                String  @id
+  id                String  @id @default(cuid())
   userId            String  @map("user_id")
   type              String
   provider          String
@@ -45,7 +45,7 @@ model Account {
 }
 
 model Session {
-  id           String   @id
+  id           String   @id @default(cuid())
   sessionToken String   @map("session_token")
   userId       String   @map("user_id")
   expires      DateTime
@@ -63,7 +63,7 @@ model VerificationToken {
 }
 
 model Farm {
-  id        Int          @id
+  id        Int          @id @default(autoincrement())
   name      String
   location  String?
   capacity  Int
@@ -78,7 +78,7 @@ model Farm {
 }
 
 model House {
-  id                 Int      @id
+  id                 Int      @id @default(autoincrement())
   farmId             Int
   name               String
   capacity           Int
@@ -94,7 +94,7 @@ model House {
 }
 
 model Batch {
-  id            Int             @id
+  id            Int             @id @default(autoincrement())
   status        String          @default("active")
   arrivalDate   DateTime
   breedType     String
@@ -115,7 +115,7 @@ model Batch {
 }
 
 model Inventory {
-  id          Int          @id
+  id          Int          @id @default(autoincrement())
   itemName    String
   stockLevel  Decimal      @db.Decimal(10, 2)
   unit        String
@@ -129,7 +129,7 @@ model Inventory {
 }
 
 model FeedingLog {
-  id             Int        @id
+  id             Int        @id @default(autoincrement())
   batchId        Int?       @map("batch_id")
   feedTypeId     Int?       @map("feed_type_id")
   amountConsumed Decimal    @map("amount_consumed") @db.Decimal(10, 2)
@@ -142,7 +142,7 @@ model FeedingLog {
 }
 
 model HealthRecord {
-  id          Int      @id
+  id          Int      @id @default(autoincrement())
   batchId     Int?     @map("batch_id")
   recordType  String?  @map("record_type") @db.VarChar(50)
   description String?
@@ -153,7 +153,7 @@ model HealthRecord {
 }
 
 model EggProduction {
-  id            Int      @id
+  id            Int      @id @default(autoincrement())
   batchId       Int
   eggsCollected Int
   damagedEggs   Int      @default(0)
@@ -167,7 +167,7 @@ model EggProduction {
 }
 
 model Mortality {
-  id          Int      @id
+  id          Int      @id @default(autoincrement())
   batchId     Int
   count       Int
   reason      String?
@@ -182,7 +182,7 @@ model Mortality {
 }
 
 model WeightRecord {
-  id            Int      @id
+  id            Int      @id @default(autoincrement())
   batchId       Int
   averageWeight Decimal  @db.Decimal(10, 3)
   logDate       DateTime
@@ -194,7 +194,7 @@ model WeightRecord {
 }
 
 model Sale {
-  id           Int        @id
+  id           Int        @id @default(autoincrement())
   customerName String?
   totalAmount  Decimal    @db.Decimal(10, 2)
   saleDate     DateTime   @default(now()) @map("saleDate")
@@ -207,7 +207,7 @@ model Sale {
 }
 
 model SaleItem {
-  id          Int     @id
+  id          Int     @id @default(autoincrement())
   saleId      Int
   description String
   quantity    Int
@@ -219,7 +219,7 @@ model SaleItem {
 }
 
 model FarmMember {
-  id        Int      @id
+  id        Int      @id @default(autoincrement())
   farmId    Int
   userId    String
   role      Role     @default(WORKER)
@@ -232,7 +232,7 @@ model FarmMember {
 }
 
 model Invitation {
-  id          Int      @id
+  id          Int      @id @default(autoincrement())
   email       String?
   phoneNumber String?  @map("phone_number")
   farmId      Int      @map("farm_id")
