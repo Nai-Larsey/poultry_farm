@@ -370,20 +370,33 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
 
 export async function onboardFarmer(data: { name: string, location: string, capacity: number }) {
   const userId = await getUserId()
+  console.log('--- onboardFarmer called for user:', userId, data);
   try {
+    // Check if farm already exists for this user
+    const existingFarm = await prisma.farm.findFirst({
+      where: { userId }
+    });
+
+    if (existingFarm) {
+      console.log('Farm already exists, returning success');
+      return { success: true, farm: existingFarm };
+    }
+
     const farm = await prisma.farm.create({
       data: {
+        id: Math.floor(Math.random() * 1000000), // Manual ID for Int PK
         name: data.name,
         location: data.location,
         capacity: data.capacity,
         userId: userId
       }
     })
+    console.log('Farm created successfully:', farm.id);
     revalidatePath('/dashboard')
     return { success: true, farm }
-  } catch (error) {
-    console.error('Error onboarding farmer:', error)
-    return { success: false, error: 'Failed to onboard farmer' }
+  } catch (error: any) {
+    console.error('Fatal error onboarding farmer:', error)
+    return { success: false, error: `Failed to onboard farmer: ${error.message}` }
   }
 }
 
