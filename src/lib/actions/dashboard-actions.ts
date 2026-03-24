@@ -5,31 +5,34 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 
-// We'll replace MOCK_USER_ID with real IDs from the session
+// Utility to get the current user ID from the session
 async function getUserId() {
   const session = await auth()
   if (!session?.user?.id) throw new Error('Unauthorized')
   return session.user.id
 }
 
-
 export async function getDashboardStats() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const totalBirds = await tx.batch.aggregate({
-      where: { status: 'active' },
+  
+  try {
+    const totalBirds = await prisma.batch.aggregate({
+      where: { status: 'active', userId: userId },
       _sum: { currentCount: true }
     })
 
-    const eggsData = await tx.eggProduction.aggregate({
+    const eggsData = await prisma.eggProduction.aggregate({
+      where: { userId: userId },
       _sum: { eggsCollected: true }
     })
 
-    const mortalityData = await tx.mortality.aggregate({
+    const mortalityData = await prisma.mortality.aggregate({
+      where: { userId: userId },
       _sum: { count: true }
     })
 
-    const totalInitialBirds = await tx.batch.aggregate({
+    const totalInitialBirds = await prisma.batch.aggregate({
+      where: { userId: userId },
       _sum: { initialCount: true }
     })
 
@@ -38,8 +41,9 @@ export async function getDashboardStats() {
       : 0
 
     const lowFeedThreshold = 500 // kg
-    const lowFeedAlerts = await tx.inventory.findMany({
+    const lowFeedAlerts = await prisma.inventory.findMany({
       where: {
+        userId: userId,
         category: 'feed',
         stockLevel: {
           lt: lowFeedThreshold
@@ -47,8 +51,8 @@ export async function getDashboardStats() {
       }
     })
 
-    const activeBatches = await tx.batch.findMany({
-      where: { status: 'active' },
+    const activeBatches = await prisma.batch.findMany({
+      where: { status: 'active', userId: userId },
       include: {
         house: true,
         eggProduction: {
@@ -65,41 +69,37 @@ export async function getDashboardStats() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
     sevenDaysAgo.setHours(0, 0, 0, 0)
 
-    const todayMortality = await tx.mortality.aggregate({
-      where: { logDate: { gte: today } },
+    const todayMortality = await prisma.mortality.aggregate({
+      where: { logDate: { gte: today }, userId: userId },
       _sum: { count: true }
     })
 
-    const todayEggs = await tx.eggProduction.aggregate({
-      where: { logDate: { gte: today } },
+    const todayEggs = await prisma.eggProduction.aggregate({
+      where: { logDate: { gte: today }, userId: userId },
       _sum: { eggsCollected: true }
     })
 
-    // Fetch raw data for last 7 days for trends
-    const recentEggs = await tx.eggProduction.findMany({
-      where: { logDate: { gte: sevenDaysAgo } },
+    const recentEggs = await prisma.eggProduction.findMany({
+      where: { logDate: { gte: sevenDaysAgo }, userId: userId },
       orderBy: { logDate: 'asc' }
     })
     
-    const recentFeed = await tx.feedingLog.findMany({
-      where: { logDate: { gte: sevenDaysAgo } },
+    const recentFeed = await prisma.feedingLog.findMany({
+      where: { logDate: { gte: sevenDaysAgo }, userId: userId },
       orderBy: { logDate: 'asc' }
     })
 
-    const recentSales = await tx.sale.findMany({
-      where: { saleDate: { gte: sevenDaysAgo } },
+    const recentSales = await prisma.sale.findMany({
+      where: { saleDate: { gte: sevenDaysAgo }, userId: userId },
       orderBy: { saleDate: 'asc' }
     })
 
-    const recentMortality = await tx.mortality.findMany({
-      where: { logDate: { gte: sevenDaysAgo } },
+    const recentMortality = await prisma.mortality.findMany({
+      where: { logDate: { gte: sevenDaysAgo }, userId: userId },
       orderBy: { logDate: 'asc' }
     })
 
-    // Helper to format Date to YYYY-MM-DD
     const formatDate = (date: Date) => date.toISOString().split('T')[0]
-
-    // Generate last 7 days labels
     const trendDates = Array.from({length: 7}).map((_, i) => {
       const d = new Date()
       d.setDate(d.getDate() - (6 - i))
@@ -149,12 +149,11 @@ export async function getDashboardStats() {
         houseNumber: batch.house?.name || 'N/A'
       }))
     }
-  }).catch((error: any) => {
+  } catch (error: any) {
     console.error('Error fetching dashboard stats:', error)
     throw new Error('Failed to fetch dashboard stats')
-  })
+  }
 }
-
 
 export async function createBatch(data: {
   houseId: number
@@ -163,8 +162,8 @@ export async function createBatch(data: {
   arrivalDate: string
 }) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const batch = await tx.batch.create({
+  try {
+    const batch = await (prisma.batch as any).create({
       data: {
         houseId: data.houseId,
         breedType: data.breedType,
@@ -177,30 +176,34 @@ export async function createBatch(data: {
     })
     revalidatePath('/dashboard')
     return { success: true, batch }
-  }).catch((error: any) => {
+  } catch (error: any) {
     console.error('Error creating batch:', error)
     return { success: false, error: 'Failed to create batch' }
-  })
+  }
 }
-
 
 export async function logFeeding(data: {
   batchId: number
   feedTypeId: number
   amountConsumed: number
 }) {
+  const userId = await getUserId()
   try {
     const result = await prisma.$transaction(async (tx: any) => {
+      const batch = await tx.batch.findUnique({ where: { id: data.batchId, userId: userId } })
+      if (!batch) throw new Error('Unauthorized')
+
       const log = await tx.feedingLog.create({
         data: {
           batchId: data.batchId,
           feedTypeId: data.feedTypeId,
-          amountConsumed: data.amountConsumed
+          amountConsumed: data.amountConsumed,
+          userId: userId
         }
       })
 
       await tx.inventory.update({
-        where: { id: data.feedTypeId },
+        where: { id: data.feedTypeId, userId: userId },
         data: {
           stockLevel: {
             decrement: data.amountConsumed
@@ -220,24 +223,21 @@ export async function logFeeding(data: {
 
 export async function getHouses() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    return await tx.house.findMany()
-  }).catch((error: any) => {
+  try {
+    return await prisma.house.findMany({ where: { userId } })
+  } catch (error: any) {
     console.error('Error fetching houses:', error)
     return []
-  })
+  }
 }
 
 export async function getAllBatches() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const batches = await tx.batch.findMany({
-      include: {
-        house: true,
-      },
-      orderBy: {
-        arrivalDate: 'desc',
-      },
+  try {
+    const batches = await prisma.batch.findMany({
+      where: { userId },
+      include: { house: true },
+      orderBy: { arrivalDate: 'desc' }
     })
     return batches.map((batch: any) => ({
       ...batch,
@@ -247,27 +247,26 @@ export async function getAllBatches() {
         currentHumidity: batch.house.currentHumidity ? Number(batch.house.currentHumidity) : null,
       } : null
     }))
-  }).catch((error: any) => {
-    console.error('Error fetching all batches:', error)
+  } catch (error: any) {
+    console.error('Error fetching batches:', error)
     return []
-  })
+  }
 }
-
 
 export async function updateBatchStatus(id: number, status: string) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const batch = await tx.batch.update({
-      where: { id },
-      data: { status },
+  try {
+    const batch = await prisma.batch.update({
+      where: { id, userId },
+      data: { status }
     })
     revalidatePath('/dashboard/flocks')
     revalidatePath('/dashboard')
     return { success: true, batch }
-  }).catch((error: any) => {
+  } catch (error: any) {
     console.error('Error updating batch status:', error)
-    return { success: false, error: 'Failed to update batch status' }
-  })
+    return { success: false, error: 'Failed' }
+  }
 }
 
 export async function logProduction(data: {
@@ -278,59 +277,59 @@ export async function logProduction(data: {
   mortalityCount: number
 }) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    // Log eggs if collected
-    if (data.eggsCollected > 0 || data.damagedEggs > 0) {
-      await tx.eggProduction.create({
-        data: {
-          batchId: data.batchId,
-          eggsCollected: data.eggsCollected,
-          damagedEggs: data.damagedEggs,
-          logDate: new Date(),
-          userId: userId
-        }
-      })
-    }
+  try {
+    return await prisma.$transaction(async (tx: any) => {
+      const batch = await tx.batch.findUnique({ where: { id: data.batchId, userId: userId } })
+      if (!batch) throw new Error('Unauthorized')
 
-    // Log mortality if occurred
-    if (data.mortalityCount > 0) {
-      await tx.mortality.create({
-        data: {
-          batchId: data.batchId,
-          count: data.mortalityCount,
-          logDate: new Date(),
-          userId: userId
-        }
-      })
-
-      // Update current count in batch
-      await tx.batch.update({
-        where: { id: data.batchId },
-        data: {
-          currentCount: {
-            decrement: data.mortalityCount
+      if (data.eggsCollected > 0 || data.damagedEggs > 0) {
+        await tx.eggProduction.create({
+          data: {
+            batchId: data.batchId,
+            eggsCollected: data.eggsCollected,
+            damagedEggs: data.damagedEggs,
+            logDate: new Date(),
+            userId: userId
           }
-        }
-      })
-    }
+        })
+      }
 
-    revalidatePath('/dashboard/eggs')
-    revalidatePath('/dashboard')
-    return { success: true }
-  }).catch((error: any) => {
+      if (data.mortalityCount > 0) {
+        await tx.mortality.create({
+          data: {
+            batchId: data.batchId,
+            count: data.mortalityCount,
+            logDate: new Date(),
+            userId: userId
+          }
+        })
+
+        await tx.batch.update({
+          where: { id: data.batchId, userId: userId },
+          data: {
+            currentCount: { decrement: data.mortalityCount }
+          }
+        })
+      }
+
+      revalidatePath('/dashboard/eggs')
+      revalidatePath('/dashboard')
+      return { success: true }
+    })
+  } catch (error: any) {
     console.error('Error logging production:', error)
-    return { success: false, error: 'Failed to log production' }
-  })
+    return { success: false, error: 'Failed' }
+  }
 }
 
 export async function updateFarmInfo(data: { name: string, location?: string, capacity: number }) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const farm = await tx.farm.findFirst({ where: { userId } })
+  try {
+    const farm = await prisma.farm.findFirst({ where: { userId } })
     if (!farm) throw new Error('Farm not found')
     
-    const updatedFarm = await tx.farm.update({
-      where: { id: farm.id },
+    const updatedFarm = await prisma.farm.update({
+      where: { id: farm.id, userId: userId },
       data: {
         name: data.name,
         location: data.location,
@@ -339,19 +338,19 @@ export async function updateFarmInfo(data: { name: string, location?: string, ca
     })
     revalidatePath('/dashboard/settings')
     return { success: true, farm: updatedFarm }
-  }).catch((error: any) => {
+  } catch (error: any) {
     console.error('Error updating farm info:', error)
-    return { success: false, error: 'Failed to update farm info' }
-  })
+    return { success: false, error: 'Failed' }
+  }
 }
 
 export async function createHouse(data: { houseNumber: string, capacity: number }) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const farm = await tx.farm.findFirst({ where: { userId } })
+  try {
+    const farm = await prisma.farm.findFirst({ where: { userId } })
     if (!farm) throw new Error('Farm not found')
 
-    const house = await tx.house.create({
+    const house = await (prisma.house as any).create({
       data: {
         name: data.houseNumber,
         capacity: data.capacity,
@@ -362,86 +361,63 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard')
     return { success: true, house }
-  }).catch((error: any) => {
+  } catch (error: any) {
     console.error('Error creating house:', error)
-    return { success: false, error: 'Failed to create house' }
-  })
+    return { success: false, error: 'Failed' }
+  }
 }
 
 export async function onboardFarmer(data: { name: string, location: string, capacity: number }) {
   const userId = await getUserId()
-  console.log('--- onboardFarmer called for user:', userId, data);
   try {
-    // Check if farm already exists for this user
-    const existingFarm = await prisma.farm.findFirst({
-      where: { userId }
-    });
-
-    if (existingFarm) {
-      console.log('Farm already exists, returning success');
-      return { success: true, farm: existingFarm };
-    }
+    const existingFarm = await prisma.farm.findFirst({ where: { userId } })
+    if (existingFarm) return { success: true, farm: existingFarm }
 
     const farm = await prisma.farm.create({
       data: {
-        id: Math.floor(Math.random() * 1000000), // Manual ID for Int PK
+        id: Math.floor(Math.random() * 1000000),
         name: data.name,
         location: data.location,
         capacity: data.capacity,
         userId: userId
       }
     })
-    console.log('Farm created successfully:', farm.id);
     revalidatePath('/dashboard')
     return { success: true, farm }
   } catch (error: any) {
-    console.error('Fatal error onboarding farmer:', error)
-    return { success: false, error: `Failed to onboard farmer: ${error.message}` }
+    console.error('Onboarding error:', error)
+    return { success: false, error: 'Failed' }
   }
 }
 
 export async function checkOnboardingStatus() {
-  const session = await auth()
-  if (!session?.user?.id) return { isOnboarded: false, error: 'Unauthorized' }
+  const userId = await getUserId().catch(() => null)
+  if (!userId) return { isOnboarded: false }
   
-  const farm = await prisma.farm.findFirst({
-    where: { userId: session.user.id }
-  })
-  
+  const farm = await prisma.farm.findFirst({ where: { userId } })
   return { isOnboarded: !!farm }
 }
 
-
 export async function getAllEggProduction() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    return await tx.eggProduction.findMany({
-      include: {
-        batch: true,
-      },
-      orderBy: {
-        logDate: 'desc',
-      },
-      take: 50,
+  try {
+    return await prisma.eggProduction.findMany({
+      where: { userId },
+      include: { batch: true },
+      orderBy: { logDate: 'desc' },
+      take: 50
     })
-  }).catch((error: any) => {
-    console.error('Error fetching egg production:', error)
-    return []
-  })
+  } catch { return [] }
 }
 
 export async function getAllFeedingLogs() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const logs = await tx.feedingLog.findMany({
-      include: {
-        batch: true,
-        inventory: true,
-      },
-      orderBy: {
-        logDate: 'desc',
-      },
-      take: 50,
+  try {
+    const logs = await prisma.feedingLog.findMany({
+      where: { userId },
+      include: { batch: true, inventory: true },
+      orderBy: { logDate: 'desc' },
+      take: 50
     })
     return logs.map((log: any) => ({
       ...log,
@@ -451,41 +427,31 @@ export async function getAllFeedingLogs() {
          stockLevel: Number(log.inventory.stockLevel)
       } : null
     }))
-  }).catch((error: any) => {
-    console.error('Error fetching feeding logs:', error)
-    return []
-  })
+  } catch { return [] }
 }
 
 export async function getAllInventory() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const items = await tx.inventory.findMany({
-      orderBy: {
-        itemName: 'asc',
-      },
+  try {
+    const items = await prisma.inventory.findMany({
+      where: { userId },
+      orderBy: { itemName: 'asc' }
     })
     return items.map((item: any) => ({
       ...item,
       stockLevel: Number(item.stockLevel)
     }))
-  }).catch((error: any) => {
-    console.error('Error fetching inventory:', error)
-    return []
-  })
+  } catch { return [] }
 }
 
 export async function getAllSales() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const sales = await tx.sale.findMany({
-      include: {
-        items: true,
-      },
-      orderBy: {
-        saleDate: 'desc',
-      },
-      take: 50,
+  try {
+    const sales = await prisma.sale.findMany({
+      where: { userId },
+      include: { items: true },
+      orderBy: { saleDate: 'desc' },
+      take: 50
     })
     return sales.map((sale: any) => ({
       ...sale,
@@ -496,56 +462,36 @@ export async function getAllSales() {
         totalPrice: Number(item.totalPrice)
       }))
     }))
-  }).catch((error: any) => {
-    console.error('Error fetching sales:', error)
-    return []
-  })
+  } catch { return [] }
 }
 
 export async function getAllMortalityLogs() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    return await tx.mortality.findMany({
-      include: {
-        batch: true,
-      },
-      orderBy: {
-        logDate: 'desc',
-      },
-      take: 50,
+  try {
+    return await prisma.mortality.findMany({
+      where: { userId },
+      include: { batch: true },
+      orderBy: { logDate: 'desc' },
+      take: 50
     })
-  }).catch((error: any) => {
-    console.error('Error fetching mortality logs:', error)
-    return []
-  })
+  } catch { return [] }
 }
 
 export async function getBatchDetails(id: number) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const batch = await tx.batch.findUnique({
-      where: { id },
+  try {
+    const batch = await prisma.batch.findUnique({
+      where: { id, userId },
       include: {
         house: true,
-        feedingLogs: {
-          include: { inventory: true },
-          orderBy: { logDate: 'desc' }
-        },
-        mortalityRecords: {
-          orderBy: { logDate: 'desc' }
-        },
-        eggProduction: {
-          orderBy: { logDate: 'desc' }
-        },
-        weightRecords: {
-          orderBy: { logDate: 'desc' }
-        }
+        feedingLogs: { where: { userId }, include: { inventory: true }, orderBy: { logDate: 'desc' } },
+        mortality: { where: { userId }, orderBy: { logDate: 'desc' } },
+        eggProduction: { where: { userId }, orderBy: { logDate: 'desc' } },
+        weightRecords: { where: { userId }, orderBy: { logDate: 'desc' } }
       }
     })
-
     if (!batch) return null
 
-    // Serialize Decimals for Client Components
     return {
       ...batch,
       house: batch.house ? {
@@ -566,20 +512,13 @@ export async function getBatchDetails(id: number) {
         averageWeight: Number(rec.averageWeight)
       }))
     }
-  }).catch((error: any) => {
-    console.error('Error fetching batch details:', error)
-    return null
-  })
+  } catch { return null }
 }
 
-export async function logWeight(data: {
-  batchId: number
-  averageWeight: number
-  logDate: string
-}) {
+export async function logWeight(data: { batchId: number, averageWeight: number, logDate: string }) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const record = await tx.weightRecord.create({
+  try {
+    const record = await (prisma.weightRecord as any).create({
       data: {
         batchId: data.batchId,
         averageWeight: data.averageWeight,
@@ -589,27 +528,17 @@ export async function logWeight(data: {
     })
     revalidatePath(`/dashboard/flocks/${data.batchId}`)
     return { success: true, record }
-  }).catch((error: any) => {
-    console.error('Error logging weight:', error)
-    return { success: false, error: 'Failed to log weight' }
-  })
+  } catch { return { success: false } }
 }
 
 export async function getInventoryDetails(id: number) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const item = await tx.inventory.findUnique({
-      where: { id },
-      include: {
-        feedingLogs: {
-          include: { batch: true },
-          orderBy: { logDate: 'desc' }
-        }
-      }
+  try {
+    const item = await prisma.inventory.findUnique({
+      where: { id, userId },
+      include: { feedingLogs: { where: { userId }, include: { batch: true }, orderBy: { logDate: 'desc' } } }
     })
-
     if (!item) return null
-
     return {
       ...item,
       stockLevel: Number(item.stockLevel),
@@ -618,24 +547,17 @@ export async function getInventoryDetails(id: number) {
         amountConsumed: Number(log.amountConsumed)
       }))
     }
-  }).catch((error: any) => {
-    console.error('Error fetching inventory details:', error)
-    return null
-  })
+  } catch { return null }
 }
 
 export async function getSaleDetails(id: number) {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const sale = await tx.sale.findUnique({
-      where: { id },
-      include: {
-        items: true
-      }
+  try {
+    const sale = await prisma.sale.findUnique({
+      where: { id, userId },
+      include: { items: true }
     })
-
     if (!sale) return null
-
     return {
       ...sale,
       totalAmount: Number(sale.totalAmount),
@@ -645,28 +567,24 @@ export async function getSaleDetails(id: number) {
         totalPrice: Number(item.totalPrice)
       }))
     }
-  }).catch((error: any) => {
-    console.error('Error fetching sale details:', error)
-    return null
-  })
+  } catch { return null }
 }
 
 export async function getGlobalFlockStats() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const batches = await tx.batch.findMany({
+  try {
+    const batches = await prisma.batch.findMany({
+      where: { userId },
       include: {
-        mortalityRecords: true,
-        feedingLogs: true,
-        eggProduction: true,
+        mortality: { where: { userId } },
+        feedingLogs: { where: { userId } },
+        eggProduction: { where: { userId } },
       }
     })
-
     return batches.map((batch: any) => {
-      const totalMortality = batch.mortalityRecords.reduce((acc: number, log: any) => acc + log.count, 0)
+      const totalMortality = batch.mortality.reduce((acc: number, log: any) => acc + log.count, 0)
       const feedConsumed = batch.feedingLogs.reduce((acc: number, log: any) => acc + Number(log.amountConsumed), 0)
       const eggsCollected = batch.eggProduction.reduce((acc: number, log: any) => acc + log.eggsCollected, 0)
-
       return {
         ...batch,
         totalMortality,
@@ -675,27 +593,25 @@ export async function getGlobalFlockStats() {
         currentQuantity: batch.initialCount - totalMortality
       }
     })
-  }).catch((error: any) => {
-    console.error('Error fetching global flock stats:', error)
-    return []
-  })
+  } catch { return [] }
 }
 
 export async function getGlobalEggStats() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const logs = await tx.eggProduction.findMany({
+  try {
+    return await prisma.eggProduction.findMany({
+      where: { userId },
       include: { batch: true },
       orderBy: { logDate: 'desc' }
     })
-    return logs
-  }).catch(() => [])
+  } catch { return [] }
 }
 
 export async function getGlobalSalesStats() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const sales = await tx.sale.findMany({
+  try {
+    const sales = await prisma.sale.findMany({
+      where: { userId },
       include: { items: true },
       orderBy: { saleDate: 'desc' }
     })
@@ -708,14 +624,15 @@ export async function getGlobalSalesStats() {
         totalPrice: Number(item.totalPrice)
       }))
     }))
-  }).catch(() => [])
+  } catch { return [] }
 }
 
 export async function getGlobalFeedStats() {
   const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
-    const inventory = await tx.inventory.findMany({
-      include: { feedingLogs: { include: { batch: true } } }
+  try {
+    const inventory = await prisma.inventory.findMany({
+      where: { userId },
+      include: { feedingLogs: { where: { userId }, include: { batch: true } } }
     })
     return inventory.map((item: any) => ({
       ...item,
@@ -725,5 +642,5 @@ export async function getGlobalFeedStats() {
         amountConsumed: Number(log.amountConsumed)
       }))
     }))
-  }).catch(() => [])
+  } catch { return [] }
 }
