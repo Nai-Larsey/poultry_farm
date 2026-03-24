@@ -2,12 +2,13 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import crypto from 'crypto';
 import { authConfig } from './auth.config';
 import prisma from '@/lib/db';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma) as any,
+  // adapter: PrismaAdapter(prisma) as any,
   session: { strategy: "jwt" },
   providers: [
     Google({
@@ -43,6 +44,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
            // Create the user dynamically
            user = await prisma.user.create({
              data: {
+               id: crypto.randomUUID(),
                phoneNumber,
                role: invitation.role,
              }
@@ -51,6 +53,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
            // Link to farm directly 
            await prisma.farmMember.create({
              data: {
+               id: Math.floor(Math.random() * 1000000),
                farmId: invitation.farmId,
                userId: user.id,
                role: invitation.role
