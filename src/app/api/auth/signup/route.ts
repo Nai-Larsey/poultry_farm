@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import crypto from 'crypto';
 import prisma from '@/lib/db';
 
 export async function POST(req: Request) {
@@ -37,6 +38,7 @@ export async function POST(req: Request) {
     // Create the user
     const user = await prisma.user.create({
       data: {
+        id: crypto.randomUUID(),
         firstname,
         surname,
         email,
@@ -49,6 +51,7 @@ export async function POST(req: Request) {
     if (invitation) {
       await prisma.farmMember.create({
         data: {
+          id: Math.floor(Math.random() * 1000000), // Random integer ID for Int pk
           farmId: invitation.farmId,
           userId: user.id,
           role: invitation.role
@@ -63,7 +66,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ message: 'User created successfully', user }, { status: 201 });
   } catch (error: any) {
-    console.error('Error during signup:', error);
+    console.error('Error during signup details:', JSON.stringify(error, null, 2));
+    console.error('Error stack:', error.stack);
     return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });
   }
 }

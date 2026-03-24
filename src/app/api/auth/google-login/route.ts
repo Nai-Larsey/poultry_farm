@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from 'crypto';
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/db";
 import { encode } from "next-auth/jwt";
@@ -32,11 +33,13 @@ export async function POST(req: Request) {
       where: { email },
       update: { name, image: picture },
       create: {
+        id: crypto.randomUUID(),
         email,
         name,
         image: picture,
         accounts: {
           create: {
+            id: crypto.randomUUID(),
             type: "oauth",
             provider: "google",
             providerAccountId: googleId,
