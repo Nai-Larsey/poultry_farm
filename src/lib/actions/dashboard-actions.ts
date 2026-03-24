@@ -127,6 +127,7 @@ export async function getDashboardStats() {
     })
 
     return {
+      userId,
       totalBirds: totalBirds._sum.currentCount || 0,
       mortalityRate: mortalityRate.toFixed(2),
       overallDead: mortalityData._sum.count || 0,

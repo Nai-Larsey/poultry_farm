@@ -13,6 +13,7 @@ import { formatCurrency } from '@/lib/utils';
 
 interface DashboardContentProps {
   stats: {
+    userId: string;
     totalBirds: number;
     mortalityRate: string;
     overallDead: number;
@@ -130,6 +131,10 @@ export function DashboardContent({ stats, houses }: DashboardContentProps) {
             <p className="text-white/70 font-bold uppercase tracking-widest text-[10px] mt-2 flex items-center gap-2 mb-2">
                <Activity className="w-3 h-3" /> Live Operations Tracking
             </p>
+            {/* DEBUG INFO - REMOVE LATER */}
+            <div className="text-[10px] text-emerald-400/50 font-mono mt-1">
+               Logged in as: <span className="text-white font-bold">{stats.userId}</span>
+            </div>
          </div>
          <div className="flex items-center gap-4">
             <button 
